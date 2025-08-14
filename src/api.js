@@ -1,12 +1,12 @@
 const BASE = "https://chatify-api.up.railway.app";
-
-// hjälp: alltid skicka cookies (som Postman gör)
 const withCreds = { credentials: "include" };
 
 export async function getCsrf() {
+  //Csrf = Cross-Site Request Forgery - CSRF-token är som ett “hemliga handslag” som skickas med varje känslig förfrågan, så servern vet att den kommer från din riktiga frontend och inte från någon annan sida.
   const res = await fetch(`${BASE}/csrf`, { method: "PATCH", ...withCreds });
-  if (!res.ok) throw new Error("CSRF failed");
   const data = await res.json();
+  if (!res.ok) throw new Error("CSRF failed");
+
   // kolla vad vi fick
   console.log("CSRF response:", data);
   return data.csrfToken;
@@ -19,10 +19,11 @@ export async function getToken({ username, password, csrfToken }) {
     body: JSON.stringify({ username, password, csrfToken }),
     ...withCreds,
   });
-  if (!res.ok) throw new Error("Login failed");
-  const data = await res.json();
-  console.log("Token response:", data); // <-- se exakt nyckeln
-  // försök plocka token oavsett nyckelnamn
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    // Visa exakt feltext från API:t om den finns
+    throw new Error(data?.message || `Login failed (${res.status})`);
+  }
   const token =
     data.accessToken ||
     data.token ||
