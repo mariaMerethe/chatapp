@@ -1,24 +1,39 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import SideNav from "./components/SideNav";
 
-function App() {
+export default function App() {
+  const { user, token } = useAuth();
+  const isAuthed = Boolean(token || user);
+
   return (
-    <>
-      <main style={{ padding: "20px", fontFamily: "sans-serif" }}>
-        <h1>ChatApp</h1>
-        <p>Välkommen! 👋</p>
-
-        {/* Tillfälligt: visa både Login och Register */}
-        <section style={{ marginTop: "20px" }}>
-          <h2>Logga in</h2>
-          <Login />
-
-          <h2>Registrera dig</h2>
-          <Register />
-        </section>
-      </main>
-    </>
+    <BrowserRouter>
+      {isAuthed ? (
+        <SideNav>
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-3xl font-bold mb-2">ChatApp</h1>
+            <p className="mb-6">Välkommen</p>
+            <Routes>
+              <Route path="/" element={<p>Välkommen in</p>} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+        </SideNav>
+      ) : (
+        <div className="p-6">
+          <div className="max-w-lg mx-auto">
+            <h1 className="text-3xl font-bold mb-2">ChatApp</h1>
+            <p className="mb-6">Välkommen</p>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </div>
+        </div>
+      )}
+    </BrowserRouter>
   );
 }
-
-export default App;
