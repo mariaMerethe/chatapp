@@ -14,7 +14,7 @@ export default function App() {
         <SideNav>
           <div className="max-w-3xl mx-auto">
             <h1 className="text-3xl font-bold mb-2">ChatApp</h1>
-            <p className="mb-6">Välkommen</p>
+            <p className="mb-6">Prata på</p>
             <Routes>
               <Route path="/" element={<p>Välkommen in</p>} />
               <Route path="*" element={<Navigate to="/" replace />} />
