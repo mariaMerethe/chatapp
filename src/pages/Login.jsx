@@ -15,6 +15,7 @@ export default function Login() {
     setMsg("Loggar in...");
     try {
       const payload = await login({ username, password });
+      Navigate("/chat", { replace: true });
 
       // fallback för olika fältnamn i JWT
       const displayName =

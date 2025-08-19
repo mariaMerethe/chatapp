@@ -10,8 +10,10 @@ function ChatPlaceholder() {
 }
 
 export default function App() {
-  const { user, token } = useAuth();
+  const { user, token, ready } = useAuth();
   const isAuthed = Boolean(token || user);
+
+  if (!ready) return null; //undvik blink innan rehydrering
 
   return (
     <BrowserRouter>
