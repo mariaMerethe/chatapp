@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { getCsrf, registerUser } from "../api";
-import { Link } from "react-router-dom";
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -9,14 +8,12 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
     setMsg("");
     setLoading(true);
-
     try {
       //1) hämta CSRF-token
       const csrfToken = await getCsrf();
@@ -43,17 +40,20 @@ export default function Register() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-x-2 space-y-2">
-      <div className="flex gap-2">
+    <div>
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-wrap gap-2 items-center"
+      >
         <input
-          className="input input-bordered w-full max-w-xs"
+          className="input input-bordered w-52"
           placeholder="username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
         />
         <input
-          className="input input-bordered w-full max-w-xs"
+          className="input input-bordered w-60"
           placeholder="email"
           type="email"
           value={email}
@@ -61,19 +61,28 @@ export default function Register() {
           required
         />
         <input
-          className="input input-bordered w-full max-w-xs"
+          className="input input-bordered w-52"
           placeholder="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          minLength={6}
           required
         />
         <button className="btn btn-secondary" type="submit" disabled={loading}>
           {loading ? "Registrerar..." : "Registrera"}
         </button>
-      </div>
+      </form>
 
-      {msg && <p className="text-sm opacity-80">{msg}</p>}
-    </form>
+      {msg && <p className="mt-3 text-sm opacity-80">{msg}</p>}
+
+      {/* ger möjlighet att logga in om man redan har ett konto */}
+      <p className="mt-2 text-sm">
+        Redan konto?{" "}
+        <Link className="link link-primary" to="/login">
+          Logga in här
+        </Link>
+      </p>
+    </div>
   );
 }
