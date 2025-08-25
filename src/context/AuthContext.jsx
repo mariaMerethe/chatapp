@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
         const payload = jwtDecode(stored);
         setToken(stored);
         setUser(payload);
+        console.log("Decoded payload:", payload);
       } catch {
         // ogiltig/korrupt token → rensa upp
         localStorage.removeItem("access_token");

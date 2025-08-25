@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import { useState } from "react";
+import Header from "./components/Header";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SideNav from "./components/SideNav";
@@ -12,25 +14,29 @@ function ChatPlaceholder() {
 export default function App() {
   const { user, token, ready } = useAuth();
   const isAuthed = Boolean(token || user);
+  const [navOpen, setNavOpen] = useState(false);
 
   if (!ready) return null; //undvik blink innan rehydrering
 
   return (
     <BrowserRouter>
       {isAuthed ? (
-        // INLOGGAD → visa appen inne i SideNav och gå mot /chat
-        <SideNav>
-          <div className="max-w-3xl mx-auto">
-            <h1 className="text-3xl font-bold mb-2">ChatApp</h1>
-            <p className="mb-6">Prata på</p>
-            <Routes>
-              <Route path="/chat" element={<ChatPlaceholder />} />
-              {/* om någon går till / eller annat → skicka till /chat */}
-              <Route path="/" element={<Navigate to="/chat" replace />} />
-              <Route path="*" element={<Navigate to="/chat" replace />} />
-            </Routes>
-          </div>
-        </SideNav>
+        // INLOGGAD: först header sen sidenav
+        <>
+          <Header onToggleMenu={() => setNavOpen((v) => !v)} />
+
+          <SideNav open={navOpen} onClose={() => setNavOpen(false)}>
+            <div className="max-w-3xl mx-auto">
+              <p className="mb-6">Prata på</p>
+              <Routes>
+                <Route path="/chat" element={<ChatPlaceholder />} />
+                {/* om någon går till / eller annat → skicka till /chat */}
+                <Route path="/" element={<Navigate to="/chat" replace />} />
+                <Route path="*" element={<Navigate to="/chat" replace />} />
+              </Routes>
+            </div>
+          </SideNav>
+        </>
       ) : (
         // UTLOGGAD → landa på /register, kunna byta till /login
         <div className="p-6">
