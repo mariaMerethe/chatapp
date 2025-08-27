@@ -1,9 +1,11 @@
-// src/pages/Login.jsx
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const { login, user } = useAuth();
+  const navigate = useNavigate();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
@@ -15,7 +17,8 @@ export default function Login() {
     setMsg("Loggar in...");
     try {
       const payload = await login({ username, password });
-      Navigate("/chat", { replace: true });
+
+      navigate("/chat", { replace: true });
 
       // fallback för olika fältnamn i JWT
       const displayName =

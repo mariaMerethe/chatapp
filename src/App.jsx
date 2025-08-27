@@ -5,11 +5,7 @@ import Header from "./components/Header";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import SideNav from "./components/SideNav";
-
-//tillfällig "chatt-sida" tills jag bygger en riktig Chat.jsx
-function ChatPlaceholder() {
-  return <p>Här kommer chatten sen</p>;
-}
+import Chat from "./pages/Chat";
 
 export default function App() {
   const { user, token, ready } = useAuth();
@@ -29,7 +25,7 @@ export default function App() {
             <div className="max-w-3xl mx-auto">
               <p className="mb-6">Prata på</p>
               <Routes>
-                <Route path="/chat" element={<ChatPlaceholder />} />
+                <Route path="/chat" element={<Chat />} />
                 {/* om någon går till / eller annat → skicka till /chat */}
                 <Route path="/" element={<Navigate to="/chat" replace />} />
                 <Route path="*" element={<Navigate to="/chat" replace />} />

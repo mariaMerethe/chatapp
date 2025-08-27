@@ -58,3 +58,22 @@ export async function registerUser({
   }
   return data; //t.ex. { id, username, ... }
 }
+
+export async function listMessages(accessToken) {
+  const res = await fetch(`${BASE}/messages`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    ...withCreds,
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg =
+      data?.message || data?.error || `Failed to load messages (${res.status})`;
+    throw new Error(msg);
+  }
+  return Array.isArray(data) ? data : data?.items || [];
+}
