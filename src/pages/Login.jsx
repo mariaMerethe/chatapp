@@ -20,7 +20,7 @@ export default function Login() {
 
       navigate("/chat", { replace: true });
 
-      // fallback för olika fältnamn i JWT
+      //fallback för olika fältnamn i JWT
       const displayName =
         payload?.username ??
         payload?.name ??
@@ -38,7 +38,7 @@ export default function Login() {
     }
   }
 
-  // samma fallback när vi visar aktiv användare
+  //samma fallback när vi visar aktiv användare
   const activeName =
     user?.username ?? user?.name ?? user?.user?.username ?? user?.sub;
 

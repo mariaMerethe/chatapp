@@ -20,10 +20,8 @@ export default function App() {
         // INLOGGAD: först header sen sidenav
         <>
           <Header onToggleMenu={() => setNavOpen((v) => !v)} />
-
           <SideNav open={navOpen} onClose={() => setNavOpen(false)}>
             <div className="max-w-3xl mx-auto">
-              <p className="mb-6">Prata på</p>
               <Routes>
                 <Route path="/chat" element={<Chat />} />
                 {/* om någon går till / eller annat → skicka till /chat */}
@@ -42,7 +40,6 @@ export default function App() {
             <Routes>
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
-              {/* root och allt annat → /register */}
               <Route path="/" element={<Navigate to="/register" replace />} />
               <Route path="*" element={<Navigate to="/register" replace />} />
             </Routes>

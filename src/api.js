@@ -98,3 +98,19 @@ export async function sendMessage(text, accessToken) {
   }
   return data; //API returnerar det sparade meddelandet
 }
+
+export async function deleteMessage(id, accessToken) {
+  const res = await fetch(`${BASE}/messages/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    },
+    ...withCreds,
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.message || `Failed to delete (${res.status})`);
+  }
+}

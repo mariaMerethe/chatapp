@@ -15,10 +15,10 @@ export default function Register() {
     setMsg("");
     setLoading(true);
     try {
-      //1) hämta CSRF-token
+      //1. hämta CSRF-token
       const csrfToken = await getCsrf();
 
-      //2) kör registrering (avatar valfritt - vi skickar en enkel placeholder)
+      //2. kör registrering (avatar valfritt - vi skickar en enkel placeholder)
       await registerUser({
         username,
         email,
@@ -27,7 +27,7 @@ export default function Register() {
         csrfToken,
       });
 
-      //3) klar! visa feedback och skicka till login
+      //3. klar! visa feedback och skicka till login
       setMsg("Kontot skapades! Skickar dig till inloggningen...");
       setTimeout(() => navigate("/login", { replace: true }), 800);
     } catch (err) {
