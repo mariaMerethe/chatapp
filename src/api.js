@@ -77,3 +77,24 @@ export async function listMessages(accessToken) {
   }
   return Array.isArray(data) ? data : data?.items || [];
 }
+
+export async function sendMessage(text, accessToken) {
+  const res = await fetch(`${BASE}/messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    },
+    ...withCreds,
+    body: JSON.stringify({ text }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg =
+      data?.message || data?.error || `Failed to send (${res.status})`;
+    throw new Error(msg);
+  }
+  return data; //API returnerar det sparade meddelandet
+}
