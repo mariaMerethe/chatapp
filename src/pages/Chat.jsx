@@ -16,30 +16,79 @@ export default function Chat() {
   const bottomRef = useRef(null);
   const lastMsgKeyRef = useRef(null); //för att bara auto-scrolla när det faktiskt kommit nytt
   const inputRef = useRef(null); //autofocus på input
-  const msgsRef = useRef([]); // så svaren ligger kvar (minns senaste listan för att kunna behålla __local)
-
+  const msgsRef = useRef([]); // så svaren ligger kvar (minns senaste listan för merge)
   useEffect(() => {
     msgsRef.current = msg;
   }, [msg]);
 
+  //tid och sortering
+  function tsOf(m) {
+    const t = m.createdAt ?? m.created_at ?? m.timestamp;
+    if (typeof t === "number") return t;
+    const d = Date.parse(t);
+    return Number.isFinite(d) ? d : 0;
+  }
+  function fmtTime(t) {
+    const ms = typeof t === "number" ? t : Date.parse(t);
+    if (!Number.isFinite(ms)) return "";
+    return new Date(ms).toLocaleString(undefined, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+  function sortByTime(a, b) {
+    return tsOf(a) - tsOf(b);
+  }
+
+  //lokal persistens
+  const localKey = user
+    ? `chat.local.${user.id || user.userId || user.username}`
+    : null;
+
+  //läs lokalt
+  useEffect(() => {
+    if (!localKey) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(localKey) || "[]");
+      if (Array.isArray(saved) && saved.length) {
+        setMsg((cur) => [...cur, ...saved].sort(sortByTime));
+      }
+    } catch {}
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localKey]);
+
+  //spara lokalt (endast _local)
+  useEffect(() => {
+    if (!localKey) return;
+    const locals = msg.filter((m) => m._local === true);
+    try {
+      localStorage.setItem(localKey, JSON.stringify(locals));
+    } catch {}
+  }, [msg, localKey]);
+
+  //laddning + polling
   useEffect(() => {
     let ignore = false;
 
-    //1. laddningsfunktion där jag väljer om spinner ska visas
+    //1. laddningsfunktion
     async function load({ showSpinner = false } = {}) {
       setErr("");
       if (showSpinner) setLoading(true);
       try {
         const data = await listMessages(token);
-
         if (!ignore) {
-          //behåll lokala (_local) meddelanden när vi uppdaterar från servern
           const serverList = Array.isArray(data) ? data : [];
           const serverIds = new Set(serverList.map((m) => m.id));
+
+          //behåll eventuella _local som inte finns på servern
           const localsToKeep = (msgsRef.current || []).filter(
             (m) => m?._local && !serverIds.has(m.id)
           );
-          const merged = [...serverList, ...localsToKeep];
+
+          const merged = [...serverList, ...localsToKeep].sort(sortByTime);
           setMsg(merged);
 
           //auto-scroll vid nytt sista meddelande
@@ -100,6 +149,7 @@ export default function Chat() {
     );
   }
 
+  //skicka medddelande-funktion
   async function handleSend(e) {
     e.preventDefault();
 
@@ -112,17 +162,19 @@ export default function Chat() {
     setErr("");
 
     //optimistisk uppdatering
+    const now = Date.now();
     const tempId = `tmp-${Date.now()}`;
     const optimistic = {
       id: tempId,
       text,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
       username: user?.username ?? "jag",
       userId: user?.id,
       __optimistic: true,
     };
 
-    setMsg((prev) => [...prev, optimistic]);
+    //lägg till min bubbla
+    setMsg((prev) => [...prev, optimistic].sort(sortByTime));
     setDraft("");
     setTimeout(
       () => bottomRef.current?.scrollIntoView({ behavior: "smooth" }),
@@ -131,19 +183,27 @@ export default function Chat() {
 
     try {
       await sendMessage(text, token);
-      //enkel "bot"-feedback i UI (klient-sida, sparas ej i API)
+      //enkelt bot-svar, direkt efter min bubbla (interleaving)
       setTimeout(() => {
-        setMsg((prev) => [
-          ...prev,
-          {
+        setMsg((prev) => {
+          const list = [...prev];
+          const idx = list.findIndex((m) => m.id === tempId);
+          const bot = {
             id: `bot-${Date.now()}`,
-            text: "🪄 Okej! Jag såg ditt meddelande.",
-            createdAt: new Date().toISOString(),
+            text: "Akta så jag inte bannar dig, var lite trevligare ;)",
+            createdAt: Date.now(), //epoch ms
             username: "Anna",
             userId: "bot",
             _local: true,
-          },
-        ]);
+          };
+          //om vi hittar min bubblas indez -> stoppa in direkt efter, annars på slutet
+          if (idx >= 0) {
+            list.splice(idx + 1, 0, bot);
+          } else {
+            list.push(bot);
+          }
+          return list.sort(sortByTime);
+        });
         setTimeout(
           () => bottomRef.current?.scrollIntoView({ behavior: "smooth" }),
           0
@@ -163,25 +223,22 @@ export default function Chat() {
     }
   }
 
+  //radera meddelande-funktion
   async function handleDelete(m) {
     //bara egna ska kunna raderas i UI
     if (!isMine(m)) return;
-
     const prev = msg;
     setMsg((cur) => cur.filter((x) => x.id !== m.id));
-
     try {
       await deleteMessage(m.id, token);
-      //klart
     } catch (e) {
-      //ångrar om API felar
-      setMsg(prev);
+      setMsg(prev); //ångrar om API felar
       setErr(e.message || "Kunde inte radera meddelandet.");
     }
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] pb-2 max-w-3xl mx-auto px-3 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-8rem)] pb-2 max-w-3xl mx-auto px-3 overflow-x-hidden">
       <h2 className="text-xl font-semibold my-3">Meddelanden</h2>
 
       {!loading && !err && msg.length === 0 && (
@@ -192,27 +249,20 @@ export default function Chat() {
       {err && <p className="text-error">{err}</p>}
 
       {/* Lista, scrollbara ytan */}
-      <div className="flex-1 overflow-y-auto space-y-2 pb-4">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-2 pb-4">
         {msg.map((m) => {
           const mine = isMine(m);
-          const time = m.createdAt || m.created_at || m.timestamp;
-          const when = time
-            ? new Date(time).toLocaleDateString(undefined, {
-                hour: "2-digit",
-                minute: "2-digit",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              })
-            : "";
+          const when = fmtTime(m.createdAt || m.created_at || m.timestamp);
           const text = m.text ?? m.content ?? "";
 
           return (
             <div
-              key={m.id ?? `${m.username}-${time}-${text.slice(0, 10)}`}
-              className={`chat ${mine ? "chat-end" : "chat-start"}`}
+              key={m.id ?? `${m.username}-${tsOf(m)}-${text.slice(0, 10)}`}
+              className={`chat ${
+                mine ? "chat-end" : "chat-start"
+              } relative pr-8 group`}
             >
-              {/* låt header ligga direkt under .chat */}
+              {/* namn över bubblan (endast om inte jag) */}
               {!mine && (
                 <div className="chat-header opacity-70 mb-0.5">
                   {m.username ??
@@ -222,7 +272,7 @@ export default function Chat() {
                 </div>
               )}
 
-              {/* chat-bubble är NU direkt barn till .chat */}
+              {/* bubbla */}
 
               <div
                 className={`chat-bubble ${mine ? "chat-bubble-primary" : ""}`}
@@ -230,14 +280,13 @@ export default function Chat() {
                 {text}
               </div>
 
-              {/* footer också direkt barn till .chat */}
+              {/* tid under bubblan */}
               <div className="chat-footer opacity-60">{when}</div>
 
-              {/* radera-knapp flyttad och absolut positionerad,
-                  så den inte påverkar bubblans form/svans */}
+              {/* radera-knapp (egna) */}
               {mine && m.id && !m.__optimistic && (
                 <button
-                  className="btn btn-xs btn-ghost absolute -right-8 top-2"
+                  className="btn btn-xs btn-ghost absolute right-2 top-2"
                   title="Radera"
                   onClick={() => handleDelete(m)}
                 >
@@ -252,7 +301,6 @@ export default function Chat() {
 
       {/* Composer */}
       <form onSubmit={handleSend} className="mt-2 flex gap-2">
-        {/*bytte iput till textarea för att kunna göra radbrytning*/}
         <input
           ref={inputRef}
           className="input input-bordered flex-1"
