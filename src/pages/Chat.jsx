@@ -16,6 +16,11 @@ export default function Chat() {
   const bottomRef = useRef(null);
   const lastMsgKeyRef = useRef(null); //för att bara auto-scrolla när det faktiskt kommit nytt
   const inputRef = useRef(null); //autofocus på input
+  const msgsRef = useRef([]); // så svaren ligger kvar (minns senaste listan för att kunna behålla __local)
+
+  useEffect(() => {
+    msgsRef.current = msg;
+  }, [msg]);
 
   useEffect(() => {
     let ignore = false;
@@ -28,10 +33,17 @@ export default function Chat() {
         const data = await listMessages(token);
 
         if (!ignore) {
-          setMsg(data);
+          //behåll lokala (_local) meddelanden när vi uppdaterar från servern
+          const serverList = Array.isArray(data) ? data : [];
+          const serverIds = new Set(serverList.map((m) => m.id));
+          const localsToKeep = (msgsRef.current || []).filter(
+            (m) => m?._local && !serverIds.has(m.id)
+          );
+          const merged = [...serverList, ...localsToKeep];
+          setMsg(merged);
 
-          //kolla om sista meddelandet har ändrats → då auto-scrolla
-          const last = data.at(-1);
+          //auto-scroll vid nytt sista meddelande
+          const last = merged.at(-1);
           const key =
             last?.id ??
             (last
@@ -55,7 +67,7 @@ export default function Chat() {
       }
     }
 
-    //första laddningen -> visa "Laddar..."
+    //första laddningen
     load({ showSpinner: true });
 
     //2. poll var 5s utan spinner
@@ -74,7 +86,7 @@ export default function Chat() {
 
   //vems meddelande ?
   function isMine(m) {
-    //API:et kan heta userId/id/authorId - jag stödjer några varianter
+    //API:et kan heta userId/id/authorId - stödjer några varianter
     const myId = user?.id ?? user?.userId;
     const msgUserId = m.userId ?? m.authorId ?? m.user?.id ?? m.user_id;
 
@@ -93,6 +105,7 @@ export default function Chat() {
 
     let text = draft.trim();
     if (!text) return;
+    //enkel sanering: ta bort taggar
     text = text.replace(/<[^>]*>/g, "");
 
     setSending(true);
@@ -125,10 +138,10 @@ export default function Chat() {
           {
             id: `bot-${Date.now()}`,
             text: "🪄 Okej! Jag såg ditt meddelande.",
-            createdAt: new Date().toDateString(),
+            createdAt: new Date().toISOString(),
             username: "Anna",
             userId: "bot",
-            __local: true,
+            _local: true,
           },
         ]);
         setTimeout(
@@ -199,7 +212,7 @@ export default function Chat() {
               key={m.id ?? `${m.username}-${time}-${text.slice(0, 10)}`}
               className={`chat ${mine ? "chat-end" : "chat-start"}`}
             >
-              {/*visa anvsändare endast om det inte är jag */}
+              {/* låt header ligga direkt under .chat */}
               {!mine && (
                 <div className="chat-header opacity-70 mb-0.5">
                   {m.username ??
@@ -208,27 +221,29 @@ export default function Chat() {
                     "Användare"}
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                {/* bubblan */}
-                <div
-                  className={`chat-bubble ${mine ? "chat-bubble-primary" : ""}`}
-                >
-                  {text}
-                </div>
 
-                {/* radera-knapp för egna */}
-                {mine && m.id && !m.__optimistic && (
-                  <button
-                    className="btn btn-xs"
-                    title="Radera"
-                    onClick={() => handleDelete(m)}
-                  >
-                    X
-                  </button>
-                )}
+              {/* chat-bubble är NU direkt barn till .chat */}
+
+              <div
+                className={`chat-bubble ${mine ? "chat-bubble-primary" : ""}`}
+              >
+                {text}
               </div>
 
+              {/* footer också direkt barn till .chat */}
               <div className="chat-footer opacity-60">{when}</div>
+
+              {/* radera-knapp flyttad och absolut positionerad,
+                  så den inte påverkar bubblans form/svans */}
+              {mine && m.id && !m.__optimistic && (
+                <button
+                  className="btn btn-xs btn-ghost absolute -right-8 top-2"
+                  title="Radera"
+                  onClick={() => handleDelete(m)}
+                >
+                  X
+                </button>
+              )}
             </div>
           );
         })}
