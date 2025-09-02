@@ -31,12 +31,13 @@ export default function Chat() {
   function fmtTime(t) {
     const ms = typeof t === "number" ? t : Date.parse(t);
     if (!Number.isFinite(ms)) return "";
-    return new Date(ms).toLocaleString(undefined, {
+    return new Date(ms).toLocaleString("sv-SE", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Europe/Stockholm",
     });
   }
   function sortByTime(a, b) {
@@ -93,13 +94,7 @@ export default function Chat() {
 
           //auto-scroll vid nytt sista meddelande
           const last = merged.at(-1);
-          const key =
-            last?.id ??
-            (last
-              ? `${last.username}-${
-                  last.createdAt || last.created_at || last.timestamp
-                }-${(last.text || last.content || "").slice(0, 10)}`
-              : "");
+          const key = last ? `${last.id ?? "noid"}-${tsOf(last)}` : "";
 
           if (key && key !== lastMsgKeyRef.current) {
             lastMsgKeyRef.current = key;
@@ -112,7 +107,7 @@ export default function Chat() {
       } catch (e) {
         if (!ignore) setErr(e.message || "Kunde inte hämta meddelanden.");
       } finally {
-        if (!ignore && showSpinner) setLoading(false); // stäng spinner bara när vi visade den
+        if (!ignore && showSpinner) setLoading(false); //stäng spinner bara när vi visade den
       }
     }
 
@@ -161,13 +156,15 @@ export default function Chat() {
     setSending(true);
     setErr("");
 
-    //optimistisk uppdatering
-    const now = Date.now();
     const tempId = `tmp-${Date.now()}`;
+
+    const nowMs = Date.now();
+
+    //optimistisk uppdatering
     const optimistic = {
       id: tempId,
       text,
-      createdAt: now,
+      createdAt: nowMs,
       username: user?.username ?? "jag",
       userId: user?.id,
       __optimistic: true,
@@ -183,20 +180,21 @@ export default function Chat() {
 
     try {
       await sendMessage(text, token);
+
       //enkelt bot-svar, direkt efter min bubbla (interleaving)
       setTimeout(() => {
         setMsg((prev) => {
           const list = [...prev];
           const idx = list.findIndex((m) => m.id === tempId);
+
           const bot = {
             id: `bot-${Date.now()}`,
             text: "Akta så jag inte bannar dig, var lite trevligare ;)",
-            createdAt: Date.now(), //epoch ms
+            createdAt: nowMs,
             username: "Anna",
             userId: "bot",
             _local: true,
           };
-          //om vi hittar min bubblas indez -> stoppa in direkt efter, annars på slutet
           if (idx >= 0) {
             list.splice(idx + 1, 0, bot);
           } else {
