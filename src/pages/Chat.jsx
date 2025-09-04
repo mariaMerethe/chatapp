@@ -28,18 +28,14 @@ export default function Chat() {
     const d = Date.parse(t);
     return Number.isFinite(d) ? d : 0;
   }
+
   function fmtTime(t) {
-    const ms = typeof t === "number" ? t : Date.parse(t);
-    if (!Number.isFinite(ms)) return "";
-    return new Date(ms).toLocaleString("sv-SE", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Europe/Stockholm",
-    });
+    const isoToShortTimeFormat =
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?Z)?$/;
+    if (!isoToShortTimeFormat.test(t) || !t) return;
+    return t.slice(0, 16).replace("T", " ");
   }
+
   function sortByTime(a, b) {
     return tsOf(a) - tsOf(b);
   }
@@ -58,7 +54,6 @@ export default function Chat() {
         setMsg((cur) => [...cur, ...saved].sort(sortByTime));
       }
     } catch {}
-    //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localKey]);
 
   //spara lokalt (endast _local)
@@ -114,8 +109,8 @@ export default function Chat() {
     //första laddningen
     load({ showSpinner: true });
 
-    //2. poll var 5s utan spinner
-    const id = setInterval(() => load({ showSpinner: false }), 5000);
+    //2. poll var 15s utan spinner
+    const id = setInterval(() => load({ showSpinner: false }), 15000);
 
     return () => {
       ignore = true;
@@ -130,11 +125,9 @@ export default function Chat() {
 
   //vems meddelande ?
   function isMine(m) {
-    //API:et kan heta userId/id/authorId - stödjer några varianter
     const myId = user?.id ?? user?.userId;
     const msgUserId = m.userId ?? m.authorId ?? m.user?.id ?? m.user_id;
 
-    //fallback: jämför username
     const myName = user?.username ?? user?.user;
     const msgName = m.username ?? m.user?.username ?? m.user?.name;
 
@@ -158,6 +151,9 @@ export default function Chat() {
 
     const tempId = `tmp-${Date.now()}`;
 
+    // TODO: Se över detta, nuvarande i millisekundrar.
+    // Du behöver en datumsträng som liknar createdAt.
+    // Tänk på tid diff!
     const nowMs = Date.now();
 
     //optimistisk uppdatering
