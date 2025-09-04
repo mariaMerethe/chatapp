@@ -40,49 +40,56 @@ export default function Register() {
   }
 
   return (
-    <div>
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-wrap gap-2 items-center"
-      >
-        <input
-          className="input input-bordered w-52"
-          placeholder="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <input
-          className="input input-bordered w-60"
-          placeholder="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          className="input input-bordered w-52"
-          placeholder="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          minLength={6}
-          required
-        />
-        <button className="btn btn-secondary" type="submit" disabled={loading}>
-          {loading ? "Registrerar..." : "Registrera"}
-        </button>
-      </form>
+    <div className="p-5">
+      <div className="card bg-gray-200 shadow-xl p-5">
+        <p className="pb-5 text-gray-700 text-xl">Registrera konto</p>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-wrap gap-2 items-center"
+        >
+          <input
+            className="input input-bordered border-2 border-gray-400 bg-white text-gray-700 w-full"
+            placeholder="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <input
+            className="input input-bordered border-2 border-gray-400 bg-white text-gray-700 w-full"
+            placeholder="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            className="input input-bordered border-2 border-gray-400 bg-white text-gray-700 w-full"
+            placeholder="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            minLength={6}
+            required
+          />
+          <button
+            className="btn btn-secondary"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? "Registrerar..." : "Registrera"}
+          </button>
+        </form>
 
-      {msg && <p className="mt-3 text-sm opacity-80">{msg}</p>}
+        {msg && <p className="mt-3 text-sm text-red-500 opacity-80">{msg}</p>}
 
-      {/* ger möjlighet att logga in om man redan har ett konto */}
-      <p className="mt-2 text-sm">
-        Redan konto?{" "}
-        <Link className="link link-primary" to="/login">
-          Logga in här
-        </Link>
-      </p>
+        {/* ger möjlighet att logga in om man redan har ett konto */}
+        <p className="mt-5 text-sm text-gray-700">
+          Redan konto?{" "}
+          <Link className="link link-primary" to="/login">
+            Logga in här
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

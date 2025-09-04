@@ -232,8 +232,8 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] pb-2 max-w-3xl mx-auto px-3 overflow-x-hidden">
-      <h2 className="text-xl font-semibold my-3">Meddelanden</h2>
+    <div className="flex flex-col h-[calc(100vh-8rem)] card shadow-xl m-10 bg-gray-200 p-5 max-w-3xl mx-auto px-3 overflow-x-hidden">
+      <h2 className="text-xl text-gray-700 pb-4 font-semibold">Meddelanden</h2>
 
       {!loading && !err && msg.length === 0 && (
         <p className="opacity-70">Inga meddelanden ännu.</p>
@@ -258,7 +258,7 @@ export default function Chat() {
             >
               {/* namn över bubblan (endast om inte jag) */}
               {!mine && (
-                <div className="chat-header opacity-70 mb-0.5">
+                <div className="chat-header text-gray-500 mb-0.5">
                   {m.username ??
                     m.user?.username ??
                     m.user?.name ??
@@ -275,12 +275,12 @@ export default function Chat() {
               </div>
 
               {/* tid under bubblan */}
-              <div className="chat-footer opacity-60">{when}</div>
+              <div className="chat-footer text-xs">{when}</div>
 
               {/* radera-knapp (egna) */}
               {mine && m.id && !m.__optimistic && (
                 <button
-                  className="btn btn-xs btn-ghost absolute right-2 top-2"
+                  className="btn btn-xs btn-ghost text-gray-500 absolute right-2 top-2"
                   title="Radera"
                   onClick={() => handleDelete(m)}
                 >

@@ -31,19 +31,21 @@ export default function SideNav({ children, open, onClose }) {
         checked={open}
       />
 
-      <div className="drawer-content">{children}</div>
+      <div className="drawer-content h-[calc(100vh-4rem)] overflow-hidden">
+        {children}
+      </div>
 
-      <div className="drawer-side z-40">
+      <div className="drawer-side z-40 h-[calc(100vh-4rem)]">
         {/* klick på overlay stänger */}
         <label
           className="drawer-overlay"
           aria-label="Stäng meny"
           onClick={onClose}
         />
-        <aside className="menu p-4 w-72 min-h-full bg-base-100 border-l">
+        <aside className="menu p-4 w-72 h-full bg-base-100 border-l overflow-hidden">
           <h2 className="text-lg font-semibold mb-4">Meny</h2>
           <button
-            className="btn btn-error text-white w-full"
+            className="btn text-white w-full bg-secondary"
             onClick={handleLogout}
           >
             Logga ut

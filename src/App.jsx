@@ -17,9 +17,12 @@ export default function App() {
   return (
     <BrowserRouter>
       {isAuthed ? (
-        // INLOGGAD: först header sen sidenav
         <>
-          <Header onToggleMenu={() => setNavOpen((v) => !v)} />
+          <Header
+            onToggleMenu={() => setNavOpen((v) => !v)}
+            showUser={true}
+            showMenu={true}
+          />
           <SideNav open={navOpen} onClose={() => setNavOpen(false)}>
             <div className="max-w-3xl mx-auto">
               <Routes>
@@ -32,11 +35,9 @@ export default function App() {
           </SideNav>
         </>
       ) : (
-        // UTLOGGAD → landa på /register, kunna byta till /login
-        <div className="p-6">
-          <div className="max-w-lg mx-auto">
-            <h1 className="text-3xl font-bold mb-2">ChatApp</h1>
-            <p className="mb-6">Välkommen</p>
+        <>
+          <Header showUser={false} showMenu={false} />
+          <div className="max-w-md mx-auto px-4 py-6">
             <Routes>
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
@@ -44,7 +45,7 @@ export default function App() {
               <Route path="*" element={<Navigate to="/register" replace />} />
             </Routes>
           </div>
-        </div>
+        </>
       )}
     </BrowserRouter>
   );
