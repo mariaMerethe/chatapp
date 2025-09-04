@@ -14,7 +14,7 @@ export default function Header({
   return (
     <div className="navbar bg-base-200 sticky top-0 z-[60]">
       <div className="flex-1">
-        <span className="text-xl font-bold">{title}</span>
+        <span className="text-xl pl-5 font-bold">{title}</span>
       </div>
 
       {/* ÄNDRAT: hela högersidan döljs om showUser/showMenu är false */}
